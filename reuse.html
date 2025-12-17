@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リユース検定 クイズ100本ノック（CSV版）</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .quiz-container {
+            background: #fff;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 20px;
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .question-section {
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .options-list li {
+            margin-bottom: 10px;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 12px;
+            text-align: left;
+            background: #eee;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 16px;
+        }
+
+        .option-btn:hover {
+            background: #ddd;
+        }
+
+        .option-btn.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .option-btn.wrong {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .feedback {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+            display: none;
+            background: #f9f9f9;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+        }
+
+        .next-btn {
+            display: none;
+            width: 100%;
+            padding: 15px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .result-section {
+            text-align: center;
+            display: none;
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .loading {
+            text-align: center;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .error-msg {
+            color: red;
+            font-size: 14px;
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="quiz-container">
+        <div id="quiz-box">
+            <h1>リユース検定 対策クイズ</h1>
+
+            <div id="loading-msg" class="loading">問題データを読み込んでいます...</div>
+            <div id="error-msg" class="error-msg"></div>
+
+            <div class="question-section" id="q-section" style="display:none;">
+                <div class="question-count">第 <span id="current-q">1</span> 問 / 全 <span id="total-q">0</span> 問</div>
+                <div class="question-text" id="question-text"></div>
+                <ul class="options-list" id="options-list"></ul>
+                <div class="feedback" id="feedback"></div>
+            </div>
+            <button class="next-btn" id="next-btn">次の問題へ</button>
+        </div>
+
+        <div class="result-section" id="result-box">
+            <h2>終了！</h2>
+            <p>あなたのスコアは...</p>
+            <div class="score"><span id="score-val">0</span> / <span id="total-val">0</span></div>
+            <p>お疲れ様でした！</p>
+            <button class="next-btn" onclick="location.reload()" style="display:block;">もう一度挑戦する</button>
+        </div>
+    </div>
+
+    <script>
+        let quizData = [];
+        let currentQuestion = 0;
+        let score = 0;
+
+        // 要素の取得
+        const quizBox = document.getElementById("quiz-box");
+        const qSection = document.getElementById("q-section");
+        const loadingMsg = document.getElementById("loading-msg");
+        const errorMsg = document.getElementById("error-msg");
+        const questionText = document.getElementById("question-text");
+        const optionsList = document.getElementById("options-list");
+        const nextBtn = document.getElementById("next-btn");
+        const currentQSpan = document.getElementById("current-q");
+        const totalQSpan = document.getElementById("total-q");
+        const feedback = document.getElementById("feedback");
+        const resultBox = document.getElementById("result-box");
+
+        // CSVをロードする関数
+        async function fetchQuizData() {
+            try {
+                const response = await fetch('quiz_data.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                parseCSV(text);
+            } catch (e) {
+                loadingMsg.style.display = 'none';
+                errorMsg.style.display = 'block';
+                errorMsg.innerHTML = "エラー: CSVファイルを読み込めませんでした。<br>ローカルサーバー(Live Server等)を使用していますか？<br><br>詳細: " + e
+                    .message;
+            }
+        }
+
+        // CSVパース関数（ダブルクォート対応）
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(','); // ヘッダー行は無視
+
+            // 1行目(ヘッダー)以外を処理
+            for (let i = 1; i < lines.length; i++) {
+                // カンマ区切りだが、ダブルクォート内のカンマは無視する正規表現
+                const row = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+
+                if (row && row.length >= 7) {
+                    // ダブルクォートを除去する処理
+                    const clean = (str) => str ? str.replace(/^"|"$/g, '').replace(/""/g, '"') : "";
+
+                    quizData.push({
+                        question: clean(row[0]),
+                        options: [clean(row[1]), clean(row[2]), clean(row[3]), clean(row[4])],
+                        answer: parseInt(clean(row[5])), // 正解番号
+                        explanation: clean(row[6])
+                    });
+                }
+            }
+
+            startQuiz();
+        }
+
+        function startQuiz() {
+            if (quizData.length === 0) {
+                loadingMsg.textContent = "データが見つかりませんでした。";
+                return;
+            }
+            loadingMsg.style.display = 'none';
+            qSection.style.display = 'block';
+            totalQSpan.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = quizData[currentQuestion];
+            questionText.textContent = q.question;
+            currentQSpan.textContent = currentQuestion + 1;
+            optionsList.innerHTML = "";
+            feedback.style.display = "none";
+            nextBtn.style.display = "none";
+
+            q.options.forEach((opt, index) => {
+                const li = document.createElement("li");
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(index, btn);
+                li.appendChild(btn);
+                optionsList.appendChild(li);
+            });
+        }
+
+        function checkAnswer(selectedIndex, btnElement) {
+            const q = quizData[currentQuestion];
+            const buttons = document.querySelectorAll(".option-btn");
+
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === q.answer) {
+                btnElement.classList.add("correct");
+                score++;
+            } else {
+                btnElement.classList.add("wrong");
+                buttons[q.answer].classList.add("correct");
+            }
+
+            feedback.innerHTML = "<strong>解説:</strong><br>" + q.explanation;
+            feedback.style.display = "block";
+            nextBtn.style.display = "block";
+        }
+
+        nextBtn.onclick = () => {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        };
+
+        function showResult() {
+            quizBox.style.display = "none";
+            resultBox.style.display = "block";
+            document.getElementById("score-val").textContent = score;
+            document.getElementById("total-val").textContent = quizData.length;
+        }
+
+        // 実行開始
+        fetchQuizData();
+    </script>
+
+</body>
+
+</html>
