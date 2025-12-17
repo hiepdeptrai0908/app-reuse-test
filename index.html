@@ -155,9 +155,11 @@
     </div>
 
     <script>
-        let quizData = [];
+        let allQuizData = []; // 全データを格納するプール
+        let currentQuizSet = []; // 今回出題する50問
         let currentQuestion = 0;
         let score = 0;
+        const QUESTIONS_TO_ASK = 50; // 出題数設定
 
         // 要素の取得
         const quizBox = document.getElementById("quiz-box");
@@ -175,7 +177,8 @@
         // CSVをロードする関数
         async function fetchQuizData() {
             try {
-                const response = await fetch('quiz_data.csv');
+                // キャッシュ回避のためにタイムスタンプを付与
+                const response = await fetch('quiz_data.csv?' + new Date().getTime());
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -184,29 +187,25 @@
             } catch (e) {
                 loadingMsg.style.display = 'none';
                 errorMsg.style.display = 'block';
-                errorMsg.innerHTML = "エラー: CSVファイルを読み込めませんでした。<br>ローカルサーバー(Live Server等)を使用していますか？<br><br>詳細: " + e
-                    .message;
+                errorMsg.innerHTML = "エラー: CSVファイルを読み込めませんでした。<br>詳細: " + e.message;
             }
         }
 
-        // CSVパース関数（ダブルクォート対応）
+        // CSVパース関数
         function parseCSV(text) {
             const lines = text.trim().split('\n');
-            const headers = lines[0].split(','); // ヘッダー行は無視
 
             // 1行目(ヘッダー)以外を処理
             for (let i = 1; i < lines.length; i++) {
-                // カンマ区切りだが、ダブルクォート内のカンマは無視する正規表現
                 const row = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
 
                 if (row && row.length >= 7) {
-                    // ダブルクォートを除去する処理
                     const clean = (str) => str ? str.replace(/^"|"$/g, '').replace(/""/g, '"') : "";
 
-                    quizData.push({
+                    allQuizData.push({
                         question: clean(row[0]),
                         options: [clean(row[1]), clean(row[2]), clean(row[3]), clean(row[4])],
-                        answer: parseInt(clean(row[5])), // 正解番号
+                        answer: parseInt(clean(row[5])),
                         explanation: clean(row[6])
                     });
                 }
@@ -215,19 +214,40 @@
             startQuiz();
         }
 
+        // 配列をシャッフルする関数（Fisher-Yates）
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         function startQuiz() {
-            if (quizData.length === 0) {
+            if (allQuizData.length === 0) {
                 loadingMsg.textContent = "データが見つかりませんでした。";
                 return;
             }
+
+            // 全データからランダムに抽出
+            // 1. まず全データをシャッフル
+            const shuffled = shuffleArray([...allQuizData]); // 元データを壊さないようコピー
+
+            // 2. 先頭から設定数（50問）だけ切り出す
+            // データが50問未満の場合はあるだけ全部出す
+            currentQuizSet = shuffled.slice(0, Math.min(QUESTIONS_TO_ASK, shuffled.length));
+
             loadingMsg.style.display = 'none';
             qSection.style.display = 'block';
-            totalQSpan.textContent = quizData.length;
+
+            // 分母を表示（例: 50）
+            totalQSpan.textContent = currentQuizSet.length;
+
             loadQuestion();
         }
 
         function loadQuestion() {
-            const q = quizData[currentQuestion];
+            const q = currentQuizSet[currentQuestion];
             questionText.textContent = q.question;
             currentQSpan.textContent = currentQuestion + 1;
             optionsList.innerHTML = "";
@@ -246,7 +266,7 @@
         }
 
         function checkAnswer(selectedIndex, btnElement) {
-            const q = quizData[currentQuestion];
+            const q = currentQuizSet[currentQuestion];
             const buttons = document.querySelectorAll(".option-btn");
 
             buttons.forEach(btn => btn.disabled = true);
@@ -266,7 +286,7 @@
 
         nextBtn.onclick = () => {
             currentQuestion++;
-            if (currentQuestion < quizData.length) {
+            if (currentQuestion < currentQuizSet.length) {
                 loadQuestion();
             } else {
                 showResult();
@@ -277,13 +297,9 @@
             quizBox.style.display = "none";
             resultBox.style.display = "block";
             document.getElementById("score-val").textContent = score;
-            document.getElementById("total-val").textContent = quizData.length;
+            document.getElementById("total-val").textContent = currentQuizSet.length;
         }
 
         // 実行開始
         fetchQuizData();
     </script>
-
-</body>
-
-</html>
