@@ -13,6 +13,7 @@ let bookmarkedQuestions = [];
 let testData = [];
 let testIndex = 0;
 let testScore = 0;
+let testAnswers = []; // Lưu câu trả lời đã chọn
 let testTimer = null;
 let testTimeLeft = 0;
 let testSettings = { count: 10, time: 30 };
@@ -79,7 +80,7 @@ const uiText = {
         testTitle: 'テストモード', testSub: '本番形式で実力をチェック',
         testSettings: 'テスト設定', questionCount: '出題数', timeLimit: '制限時間',
         noLimit: 'なし', minutes: '分', allQuestions: '全問',
-        startTestBtn: 'テスト開始', nextQ: '次の問題',
+        startTestBtn: 'テスト開始', nextQ: '次の問題', prevQ: '前の問題',
         // Result
         testEnd: 'テスト終了！', retry: 'もう一度', review: '復習する',
         excellent: '素晴らしい！合格です！',
@@ -113,7 +114,7 @@ const uiText = {
         testTitle: 'Chế độ thi thử', testSub: 'Kiểm tra năng lực theo format thi thật',
         testSettings: 'Cài đặt bài thi', questionCount: 'Số câu hỏi', timeLimit: 'Thời gian',
         noLimit: 'Không', minutes: 'phút', allQuestions: 'Tất cả',
-        startTestBtn: 'Bắt đầu thi', nextQ: 'Câu tiếp theo',
+        startTestBtn: 'Bắt đầu thi', nextQ: 'Câu tiếp theo', prevQ: 'Câu trước',
         testEnd: 'Hoàn thành!', retry: 'Làm lại', review: 'Xem lại',
         excellent: 'Xuất sắc! Đậu rồi!',
         good: 'Gần đậu! Cần 90 điểm trở lên',
@@ -142,7 +143,7 @@ const uiText = {
         testTitle: 'Test Mode', testSub: 'Check your skills in exam format',
         testSettings: 'Test Settings', questionCount: 'Questions', timeLimit: 'Time Limit',
         noLimit: 'None', minutes: 'min', allQuestions: 'All',
-        startTestBtn: 'Start Test', nextQ: 'Next Question',
+        startTestBtn: 'Start Test', nextQ: 'Next Question', prevQ: 'Previous',
         testEnd: 'Test Complete!', retry: 'Try Again', review: 'Review',
         excellent: 'Excellent! You passed!',
         good: 'Almost there! Need 90+ points to pass',
@@ -171,7 +172,7 @@ const uiText = {
         testTitle: '测试模式', testSub: '以考试形式检验实力',
         testSettings: '测试设置', questionCount: '题目数量', timeLimit: '时间限制',
         noLimit: '无', minutes: '分钟', allQuestions: '全部',
-        startTestBtn: '开始测试', nextQ: '下一题',
+        startTestBtn: '开始测试', nextQ: '下一题', prevQ: '上一题',
         testEnd: '测试结束！', retry: '再试一次', review: '复习',
         excellent: '太棒了！合格了！',
         good: '差一点！需要90分以上才能合格',
@@ -753,6 +754,7 @@ function startTest() {
     testData = shuffleArray([...allQuizData]).slice(0, count);
     testIndex = 0;
     testScore = 0;
+    testAnswers = new Array(testData.length).fill(null); // Reset câu trả lời
     testTimeLeft = testSettings.time * 60;
 
     document.getElementById('test-setup').style.display = 'none';
@@ -791,6 +793,7 @@ function loadTestQuestion() {
     const q = testData[testIndex];
     const transQ = getTranslation('questions', q.id);
     const transOpts = getTranslation('options', q.id);
+    const transExp = getTranslation('explanations', q.id);
 
     document.getElementById('test-current').textContent = testIndex + 1;
     document.getElementById('progress-fill').style.width = 
@@ -811,6 +814,8 @@ function loadTestQuestion() {
     // Options
     const optionsEl = document.getElementById('test-options');
     optionsEl.innerHTML = '';
+    const answered = testAnswers[testIndex];
+    
     q.options.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
@@ -822,13 +827,43 @@ function loadTestQuestion() {
             btn.innerHTML = opt + `<span class="option-vi">🇻🇳 ${translations.vi.options[q.id][idx]}</span>`;
         }
         
-        btn.onclick = () => checkTestAnswer(idx, btn);
+        // Nếu đã trả lời câu này, hiển thị kết quả
+        if (answered !== null) {
+            btn.disabled = true;
+            if (idx === q.answer) {
+                btn.classList.add('correct');
+            } else if (idx === answered && answered !== q.answer) {
+                btn.classList.add('wrong');
+            }
+        } else {
+            btn.onclick = () => checkTestAnswer(idx, btn);
+        }
+        
         optionsEl.appendChild(btn);
     });
 
-    // Reset feedback
-    document.getElementById('test-feedback').style.display = 'none';
-    document.getElementById('next-question').style.display = 'none';
+    // Feedback
+    const feedbackEl = document.getElementById('test-feedback');
+    if (answered !== null) {
+        const expLabel = t('explanation');
+        const expText = transExp || q.explanation;
+        
+        let feedbackHTML = `<strong>${expLabel}</strong>${currentLang.startsWith('ja') ? q.explanation : expText}`;
+        if (currentLang === 'ja-vi' && translations.vi.explanations[q.id]) {
+            feedbackHTML += `<div class="feedback-vi">🇻🇳 ${translations.vi.explanations[q.id]}</div>`;
+        }
+        
+        document.getElementById('feedback-content').innerHTML = feedbackHTML;
+        feedbackEl.style.display = 'block';
+        document.getElementById('next-question').style.display = 'inline-flex';
+    } else {
+        feedbackEl.style.display = 'none';
+        document.getElementById('next-question').style.display = 'none';
+    }
+    
+    // Hiển thị/ẩn nút back
+    const prevBtn = document.getElementById('prev-question');
+    prevBtn.style.display = testIndex > 0 ? 'inline-flex' : 'none';
 }
 
 function checkTestAnswer(selected, btnEl) {
@@ -837,6 +872,9 @@ function checkTestAnswer(selected, btnEl) {
     const buttons = document.querySelectorAll('.option-btn');
 
     buttons.forEach(btn => btn.disabled = true);
+    
+    // Lưu câu trả lời
+    testAnswers[testIndex] = selected;
 
     if (selected === q.answer) {
         btnEl.classList.add('correct');
@@ -871,6 +909,13 @@ document.getElementById('next-question').addEventListener('click', () => {
     } else {
         if (testTimer) clearInterval(testTimer);
         showTestResult();
+    }
+});
+
+document.getElementById('prev-question').addEventListener('click', () => {
+    if (testIndex > 0) {
+        testIndex--;
+        loadTestQuestion();
     }
 });
 
@@ -1136,6 +1181,7 @@ function updateAllText() {
     timeBtns[2].textContent = '60' + t('minutes');
 
     document.querySelector('.start-test-btn').innerHTML = `<i class="fas fa-play"></i> ${t('startTestBtn')}`;
+    document.getElementById('prev-question').innerHTML = `<i class="fas fa-arrow-left"></i> ${t('prevQ')}`;
     document.getElementById('next-question').innerHTML = `${t('nextQ')} <i class="fas fa-arrow-right"></i>`;
 
     // Result page

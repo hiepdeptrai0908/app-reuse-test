@@ -704,7 +704,7 @@ body {
 
 .test-header > div:first-child {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 15px;
 }
@@ -841,6 +841,24 @@ body {
 
 .test-btn:hover {
   background: var(--primary-dark);
+}
+
+.test-btn.secondary {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+}
+
+.test-btn.secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.test-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 /* Test Result */
