@@ -1,305 +1,966 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>リユース検定 クイズ100本ノック（CSV版）</title>
-    <style>
-        body {
-            font-family: "Helvetica Neue", Arial, sans-serif;
-            background: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .quiz-container {
-            background: #fff;
-            width: 100%;
-            max-width: 600px;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            font-size: 20px;
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .question-section {
-            margin-bottom: 20px;
-        }
-
-        .question-text {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .options-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .options-list li {
-            margin-bottom: 10px;
-        }
-
-        .option-btn {
-            width: 100%;
-            padding: 12px;
-            text-align: left;
-            background: #eee;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 16px;
-        }
-
-        .option-btn:hover {
-            background: #ddd;
-        }
-
-        .option-btn.correct {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .option-btn.wrong {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .feedback {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #555;
-            display: none;
-            background: #f9f9f9;
-            padding: 10px;
-            border-left: 4px solid #007bff;
-        }
-
-        .next-btn {
-            display: none;
-            width: 100%;
-            padding: 15px;
-            background: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 18px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        .result-section {
-            text-align: center;
-            display: none;
-        }
-
-        .score {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007bff;
-        }
-
-        .loading {
-            text-align: center;
-            font-weight: bold;
-            color: #666;
-        }
-
-        .error-msg {
-            color: red;
-            font-size: 14px;
-            display: none;
-            margin-top: 10px;
-        }
-    </style>
+    <title>リユース検定 学習アプリ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-
-    <div class="quiz-container">
-        <div id="quiz-box">
-            <h1>リユース検定 対策クイズ</h1>
-
-            <div id="loading-msg" class="loading">問題データを読み込んでいます...</div>
-            <div id="error-msg" class="error-msg"></div>
-
-            <div class="question-section" id="q-section" style="display:none;">
-                <div class="question-count">第 <span id="current-q">1</span> 問 / 全 <span id="total-q">0</span> 問</div>
-                <div class="question-text" id="question-text"></div>
-                <ul class="options-list" id="options-list"></ul>
-                <div class="feedback" id="feedback"></div>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fas fa-recycle"></i>
+                <span>リユース検定</span>
             </div>
-            <button class="next-btn" id="next-btn">次の問題へ</button>
-        </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-page="home">
+                    <i class="fas fa-home"></i><span>ホーム</span>
+                </li>
+                <li class="nav-item" data-page="study">
+                    <i class="fas fa-book-open"></i><span>学習モード</span>
+                </li>
+                <li class="nav-item" data-page="test">
+                    <i class="fas fa-clipboard-check"></i><span>テストモード</span>
+                </li>
+                <li class="nav-item" data-page="tips">
+                    <i class="fas fa-lightbulb"></i><span>合格のコツ</span>
+                </li>
+            </ul>
+            <div class="language-switch">
+                <button class="lang-btn active" data-lang="ja">🇯🇵 日本語</button>
+                <button class="lang-btn" data-lang="vi">🇻🇳 Tiếng Việt</button>
+                <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+                <button class="lang-btn" data-lang="zh">🇨🇳 中文</button>
+                <button class="lang-btn" data-lang="ja-vi">🇯🇵+🇻🇳</button>
+            </div>
+        </nav>
 
-        <div class="result-section" id="result-box">
-            <h2>終了！</h2>
-            <p>あなたのスコアは...</p>
-            <div class="score"><span id="score-val">0</span> / <span id="total-val">0</span></div>
-            <p>お疲れ様でした！</p>
-            <button class="next-btn" onclick="location.reload()" style="display:block;">もう一度挑戦する</button>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Home Page -->
+            <div id="home-page" class="page active">
+                <div class="page-header">
+                    <h1>リユース検定 学習アプリへようこそ</h1>
+                    <p class="subtitle">効率的に学習して、合格を目指しましょう！</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-question-circle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="total-questions">0</span>
+                            <span class="stat-label">問題数</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="studied-count">0</span>
+                            <span class="stat-label">学習済み</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="accuracy-rate">0%</span>
+                            <span class="stat-label">正答率</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="quick-actions">
+                    <button class="action-btn primary" onclick="navigateTo('study')">
+                        <i class="fas fa-book-open"></i>学習を始める
+                    </button>
+                    <button class="action-btn secondary" onclick="navigateTo('test')">
+                        <i class="fas fa-clipboard-check"></i>テストに挑戦
+                    </button>
+                </div>
+                <button class="reset-stats-btn" onclick="resetStats()">
+                    <i class="fas fa-trash-alt"></i> <span>統計をリセット</span>
+                </button>
+
+                <!-- Bookmarked Questions Section -->
+                <div class="bookmarks-section" id="bookmarks-section">
+                    <div class="bookmarks-header">
+                        <h3><i class="fas fa-bookmark"></i> <span id="bookmarks-title">ブックマーク</span></h3>
+                        <button class="clear-bookmarks-btn" id="clear-bookmarks-btn" onclick="clearBookmarks()">
+                            <i class="fas fa-times"></i> <span>クリア</span>
+                        </button>
+                    </div>
+                    <div class="bookmarks-list" id="bookmarks-list"></div>
+                </div>
+            </div>
+
+            <!-- Study Page -->
+            <div id="study-page" class="page">
+                <div class="page-header">
+                    <h1><i class="fas fa-book-open"></i> 学習モード</h1>
+                    <p class="subtitle">カテゴリ別に問題を学習できます</p>
+                </div>
+                
+                <!-- Group Selection View -->
+                <div id="study-groups" class="study-groups">
+                    <div class="group-card" data-group="1">
+                        <div class="group-icon"><i class="fas fa-recycle"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">3R・循環型社会</h3>
+                            <p class="group-desc">3R概念、循環型社会形成推進基本法</p>
+                            <span class="group-count">Q1-5</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/5</span></div>
+                    </div>
+                    <div class="group-card" data-group="2">
+                        <div class="group-icon"><i class="fas fa-store"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">古物営業の基本</h3>
+                            <p class="group-desc">古物の定義、13区分、3種類の営業</p>
+                            <span class="group-count">Q6-15</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/10</span></div>
+                    </div>
+                    <div class="group-card" data-group="3">
+                        <div class="group-icon"><i class="fas fa-file-alt"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">許可・届出</h3>
+                            <p class="group-desc">許可申請、届出、欠格事由、管理者</p>
+                            <span class="group-count">Q16-25</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/10</span></div>
+                    </div>
+                    <div class="group-card" data-group="4">
+                        <div class="group-icon"><i class="fas fa-id-card"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">本人確認</h3>
+                            <p class="group-desc">確認義務、例外品目、確認方法</p>
+                            <span class="group-count">Q26-35</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/10</span></div>
+                    </div>
+                    <div class="group-card" data-group="5">
+                        <div class="group-icon"><i class="fas fa-book"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">帳簿・記録</h3>
+                            <p class="group-desc">帳簿記載義務、保存期間、品触れ</p>
+                            <span class="group-count">Q36-45</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/10</span></div>
+                    </div>
+                    <div class="group-card" data-group="6">
+                        <div class="group-icon"><i class="fas fa-globe"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">ネット取引・行商</h3>
+                            <p class="group-desc">URL届出、仮設店舗、行商</p>
+                            <span class="group-count">Q46-55</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/10</span></div>
+                    </div>
+                    <div class="group-card" data-group="7">
+                        <div class="group-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">訪問購入・クーリングオフ</h3>
+                            <p class="group-desc">特定商取引法、クーリングオフ</p>
+                            <span class="group-count">Q56-65</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/10</span></div>
+                    </div>
+                    <div class="group-card" data-group="8">
+                        <div class="group-icon"><i class="fas fa-gavel"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">罰則・警察権限</h3>
+                            <p class="group-desc">罰則、立入調査、差止め、盗品回復</p>
+                            <span class="group-count">Q66-75</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/10</span></div>
+                    </div>
+                    <div class="group-card" data-group="9">
+                        <div class="group-icon"><i class="fas fa-certificate"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">その他法令</h3>
+                            <p class="group-desc">PSC/PSE、家電リサイクル、個人情報保護</p>
+                            <span class="group-count">Q76-88</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/13</span></div>
+                    </div>
+                    <div class="group-card all-questions" data-group="all">
+                        <div class="group-icon"><i class="fas fa-list"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">全問題</h3>
+                            <p class="group-desc">すべての問題をランダムで学習</p>
+                            <span class="group-count">全88問</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text">0/88</span></div>
+                    </div>
+                    <div class="group-card bookmarked-group" data-group="bookmarked">
+                        <div class="group-icon"><i class="fas fa-bookmark"></i></div>
+                        <div class="group-info">
+                            <h3 class="group-title">ブックマーク</h3>
+                            <p class="group-desc">復習したい問題</p>
+                            <span class="group-count" id="bookmark-count">0問</span>
+                        </div>
+                        <div class="group-progress"><span class="progress-text"></span></div>
+                    </div>
+                </div>
+
+                <!-- Flashcard Study View -->
+                <div id="study-flashcard" class="study-flashcard-view" style="display:none;">
+                    <div class="study-header-row">
+                        <button class="back-to-groups" id="back-to-groups">
+                            <i class="fas fa-arrow-left"></i><span></span>
+                        </button>
+                        <div class="current-group-title" id="current-group-title"></div>
+                    </div>
+                    <div class="study-controls">
+                        <div class="control-group">
+                            <label>表示順</label>
+                            <select id="order-select">
+                                <option value="sequential">順番通り</option>
+                                <option value="random">ランダム</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flashcard-container">
+                        <div class="flashcard" id="flashcard">
+                            <div class="card-front">
+                                <div class="card-number">問題 <span id="study-current">1</span> / <span id="study-total">0</span></div>
+                                <div class="card-question" id="study-question"></div>
+                                <div class="card-question-vi" id="study-question-vi"></div>
+                                <div class="card-hint">クリックして答えを見る</div>
+                            </div>
+                            <div class="card-back">
+                                <div class="card-answer" id="study-answer"></div>
+                                <div class="card-explanation" id="study-explanation"></div>
+                                <div class="card-explanation-vi" id="study-explanation-vi"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-nav">
+                        <button class="nav-btn" id="prev-card"><i class="fas fa-chevron-left"></i> 前へ</button>
+                        <button class="nav-btn bookmark-btn" id="bookmark-btn"><i class="far fa-bookmark"></i></button>
+                        <button class="nav-btn" id="next-card">次へ <i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Page -->
+            <div id="test-page" class="page">
+                <div class="page-header">
+                    <h1><i class="fas fa-clipboard-check"></i> テストモード</h1>
+                    <p class="subtitle">本番形式で実力をチェック</p>
+                </div>
+                <div id="test-setup" class="test-setup">
+                    <div class="setup-card">
+                        <h3>テスト設定</h3>
+                        <div class="setup-option">
+                            <label>出題数</label>
+                            <div class="btn-group">
+                                <button class="setup-btn active" data-count="10">10問</button>
+                                <button class="setup-btn" data-count="25">25問</button>
+                                <button class="setup-btn" data-count="50">50問</button>
+                                <button class="setup-btn" data-count="all">全問</button>
+                            </div>
+                        </div>
+                        <div class="setup-option">
+                            <label>制限時間</label>
+                            <div class="btn-group">
+                                <button class="setup-btn" data-time="0">なし</button>
+                                <button class="setup-btn active" data-time="30">30分</button>
+                                <button class="setup-btn" data-time="60">60分</button>
+                            </div>
+                        </div>
+                        <button class="start-test-btn" onclick="startTest()">
+                            <i class="fas fa-play"></i> テスト開始
+                        </button>
+                    </div>
+                </div>
+
+                <div id="test-area" class="test-area" style="display:none;">
+                    <div class="test-header">
+                        <div class="test-progress">
+                            <span id="test-current">1</span> / <span id="test-total">50</span>
+                        </div>
+                        <div class="test-timer" id="test-timer">
+                            <i class="fas fa-clock"></i> <span id="timer-display">30:00</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question-text" id="test-question"></div>
+                        <div class="question-text-vi" id="test-question-vi"></div>
+                        <div class="options-grid" id="test-options"></div>
+                        <div class="feedback-area" id="test-feedback" style="display:none;">
+                            <div class="feedback-content" id="feedback-content"></div>
+                        </div>
+                    </div>
+                    <div class="test-actions">
+                        <button class="test-btn" id="next-question" style="display:none;">
+                            次の問題 <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="test-result" class="test-result" style="display:none;">
+                    <div class="result-card">
+                        <div class="result-icon" id="result-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h2 id="result-title">テスト終了！</h2>
+                        <div class="result-score">
+                            <span class="score-number" id="final-score">0</span>
+                            <span class="score-total">/ <span id="final-total">50</span></span>
+                        </div>
+                        <div class="result-percentage" id="result-percentage">0%</div>
+                        <div class="result-message" id="result-message"></div>
+                        <div class="result-actions">
+                            <button class="action-btn primary" onclick="retryTest()">
+                                <i class="fas fa-redo"></i> もう一度
+                            </button>
+                            <button class="action-btn secondary" onclick="reviewAnswers()">
+                                <i class="fas fa-search"></i> 復習する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips Page -->
+            <div id="tips-page" class="page">
+                <div class="page-header">
+                    <h1><i class="fas fa-lightbulb"></i> 合格のコツ</h1>
+                    <p class="subtitle">効率的な学習方法と試験対策</p>
+                </div>
+                <div class="tips-container">
+                    <!-- Tip 1: 3R và Luật cơ bản -->
+                    <div class="tip-card">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-recycle"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">3Rと循環型社会</h3>
+                                <h4 class="tip-title-vi">3R và Xã hội tuần hoàn</h4>
+                                <h4 class="tip-title-en">3R and Recycling-Based Society</h4>
+                                <h4 class="tip-title-zh">3R与循环型社会</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <p><strong>優先順位：</strong></p>
+                                <ul>
+                                    <li>Reduce（発生抑制）→ 最優先</li>
+                                    <li>Reuse（再使用）</li>
+                                    <li>Recycle（再資源化）</li>
+                                </ul>
+                                <p>循環型社会形成推進基本法は2000年に成立</p>
+                            </div>
+                            <div class="tip-vi">
+                                <p><strong>Thứ tự ưu tiên:</strong></p>
+                                <ul>
+                                    <li>Reduce (Giảm thiểu) → Ưu tiên cao nhất</li>
+                                    <li>Reuse (Tái sử dụng)</li>
+                                    <li>Recycle (Tái chế)</li>
+                                </ul>
+                                <p>Luật cơ bản xây dựng xã hội tuần hoàn được ban hành năm 2000</p>
+                            </div>
+                            <div class="tip-en">
+                                <p><strong>Priority Order:</strong></p>
+                                <ul>
+                                    <li>Reduce → Highest priority</li>
+                                    <li>Reuse</li>
+                                    <li>Recycle</li>
+                                </ul>
+                                <p>Basic Act for Establishing Recycling-Based Society enacted in 2000</p>
+                            </div>
+                            <div class="tip-zh">
+                                <p><strong>优先顺序：</strong></p>
+                                <ul>
+                                    <li>Reduce（减量）→ 最优先</li>
+                                    <li>Reuse（再使用）</li>
+                                    <li>Recycle（再资源化）</li>
+                                </ul>
+                                <p>循环型社会形成推进基本法于2000年制定</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip 2: Định nghĩa kinh doanh đồ cũ -->
+                    <div class="tip-card">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-store"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">古物営業の3種類</h3>
+                                <h4 class="tip-title-vi">3 loại kinh doanh đồ cũ</h4>
+                                <h4 class="tip-title-en">3 Types of Antique Business</h4>
+                                <h4 class="tip-title-zh">古物营业的3种类型</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <ul>
+                                    <li>古物商 → 許可必要</li>
+                                    <li>古物市場主 → 許可必要</li>
+                                    <li>古物競りあっせん業者 → 届出のみ</li>
+                                </ul>
+                                <div class="collapsible">
+                                    <button class="collapsible-toggle" onclick="toggleCollapsible(this)">
+                                        <span>古物13区分を見る</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="collapsible-content">
+                                        <ol>
+                                            <li>美術品類</li>
+                                            <li>衣類</li>
+                                            <li>時計・宝飾品類</li>
+                                            <li>自動車</li>
+                                            <li>自動二輪車・原付</li>
+                                            <li>自転車類</li>
+                                            <li>写真機類</li>
+                                            <li>事務機器類</li>
+                                            <li>機械工具類</li>
+                                            <li>道具類</li>
+                                            <li>皮革・ゴム製品類</li>
+                                            <li>書籍</li>
+                                            <li>金券類</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tip-vi">
+                                <ul>
+                                    <li>Thương nhân đồ cũ → Cần giấy phép</li>
+                                    <li>Chủ chợ đồ cũ → Cần giấy phép</li>
+                                    <li>Người môi giới đấu giá → Chỉ cần thông báo</li>
+                                </ul>
+                                <div class="collapsible">
+                                    <button class="collapsible-toggle" onclick="toggleCollapsible(this)">
+                                        <span>Xem 13 loại đồ cũ</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="collapsible-content">
+                                        <ol>
+                                            <li>Mỹ thuật phẩm</li>
+                                            <li>Quần áo</li>
+                                            <li>Đồng hồ, trang sức</li>
+                                            <li>Ô tô</li>
+                                            <li>Xe máy, xe ga</li>
+                                            <li>Xe đạp</li>
+                                            <li>Máy ảnh</li>
+                                            <li>Thiết bị văn phòng</li>
+                                            <li>Máy móc, dụng cụ</li>
+                                            <li>Đồ dùng</li>
+                                            <li>Đồ da, cao su</li>
+                                            <li>Sách</li>
+                                            <li>Phiếu quà tặng, tem</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tip-en">
+                                <ul>
+                                    <li>Antique Dealer → License required</li>
+                                    <li>Antique Market Operator → License required</li>
+                                    <li>Antique Auction Intermediary → Notification only</li>
+                                </ul>
+                                <div class="collapsible">
+                                    <button class="collapsible-toggle" onclick="toggleCollapsible(this)">
+                                        <span>View 13 Categories</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="collapsible-content">
+                                        <ol>
+                                            <li>Art objects</li>
+                                            <li>Clothing</li>
+                                            <li>Watches & Jewelry</li>
+                                            <li>Automobiles</li>
+                                            <li>Motorcycles & Scooters</li>
+                                            <li>Bicycles</li>
+                                            <li>Cameras</li>
+                                            <li>Office equipment</li>
+                                            <li>Machinery & Tools</li>
+                                            <li>Household items</li>
+                                            <li>Leather & Rubber products</li>
+                                            <li>Books</li>
+                                            <li>Gift certificates & Stamps</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tip-zh">
+                                <ul>
+                                    <li>古物商 → 需要许可</li>
+                                    <li>古物市场主 → 需要许可</li>
+                                    <li>古物拍卖中介 → 仅需申报</li>
+                                </ul>
+                                <div class="collapsible">
+                                    <button class="collapsible-toggle" onclick="toggleCollapsible(this)">
+                                        <span>查看13区分</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="collapsible-content">
+                                        <ol>
+                                            <li>美术品类</li>
+                                            <li>衣类</li>
+                                            <li>钟表・珠宝类</li>
+                                            <li>汽车</li>
+                                            <li>摩托车・原付</li>
+                                            <li>自行车类</li>
+                                            <li>相机类</li>
+                                            <li>办公设备类</li>
+                                            <li>机械工具类</li>
+                                            <li>道具类</li>
+                                            <li>皮革・橡胶制品类</li>
+                                            <li>书籍</li>
+                                            <li>礼券类</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip 3: Các con số quan trọng -->
+                    <div class="tip-card">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-calculator"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">重要な数字</h3>
+                                <h4 class="tip-title-vi">Các con số quan trọng</h4>
+                                <h4 class="tip-title-en">Important Numbers</h4>
+                                <h4 class="tip-title-zh">重要数字</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <ul>
+                                    <li><strong>1万円以上</strong> → 本人確認必要</li>
+                                    <li><strong>14日以内</strong> → 変更届出期限</li>
+                                    <li><strong>10日以内</strong> → 許可証返納期限</li>
+                                    <li><strong>8日間</strong> → クーリング・オフ期間</li>
+                                    <li><strong>3日前</strong> → 仮設店舗届出期限</li>
+                                    <li><strong>30日</strong> → 差止め（保管命令）期間</li>
+                                    <li><strong>2年間</strong> → 盗品の無償返還請求期間</li>
+                                </ul>
+                            </div>
+                            <div class="tip-vi">
+                                <ul>
+                                    <li><strong>Từ 10.000 yên</strong> → Cần xác minh danh tính</li>
+                                    <li><strong>Trong 14 ngày</strong> → Thời hạn thông báo thay đổi</li>
+                                    <li><strong>Trong 10 ngày</strong> → Thời hạn trả lại giấy phép</li>
+                                    <li><strong>8 ngày</strong> → Thời gian Cooling-off</li>
+                                    <li><strong>3 ngày trước</strong> → Thời hạn thông báo cửa hàng tạm</li>
+                                    <li><strong>30 ngày</strong> → Thời gian lệnh giữ hàng</li>
+                                    <li><strong>2 năm</strong> → Thời gian yêu cầu trả lại đồ ăn cắp</li>
+                                </ul>
+                            </div>
+                            <div class="tip-en">
+                                <ul>
+                                    <li><strong>10,000 yen or more</strong> → ID verification required</li>
+                                    <li><strong>Within 14 days</strong> → Change notification deadline</li>
+                                    <li><strong>Within 10 days</strong> → License return deadline</li>
+                                    <li><strong>8 days</strong> → Cooling-off period</li>
+                                    <li><strong>3 days before</strong> → Temporary store notification deadline</li>
+                                    <li><strong>30 days</strong> → Hold order period</li>
+                                    <li><strong>2 years</strong> → Stolen goods return request period</li>
+                                </ul>
+                            </div>
+                            <div class="tip-zh">
+                                <ul>
+                                    <li><strong>1万日元以上</strong> → 需要身份确认</li>
+                                    <li><strong>14天内</strong> → 变更申报期限</li>
+                                    <li><strong>10天内</strong> → 许可证归还期限</li>
+                                    <li><strong>8天</strong> → 冷静期</li>
+                                    <li><strong>3天前</strong> → 临时店铺申报期限</li>
+                                    <li><strong>30天</strong> → 扣押（保管命令）期间</li>
+                                    <li><strong>2年</strong> → 赃物无偿归还请求期间</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip 4: Xác minh danh tính -->
+                    <div class="tip-card">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-id-card"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">本人確認のルール</h3>
+                                <h4 class="tip-title-vi">Quy tắc xác minh danh tính</h4>
+                                <h4 class="tip-title-en">ID Verification Rules</h4>
+                                <h4 class="tip-title-zh">身份确认规则</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <p><strong>1万円未満でも確認必要：</strong></p>
+                                <ul>
+                                    <li>ゲームソフト</li>
+                                    <li>CD/DVD</li>
+                                    <li>書籍</li>
+                                    <li>自動二輪車・原付</li>
+                                </ul>
+                                <p><strong>確認項目：</strong>住所・氏名・職業・年齢</p>
+                            </div>
+                            <div class="tip-vi">
+                                <p><strong>Cần xác minh dù dưới 10.000 yên:</strong></p>
+                                <ul>
+                                    <li>Phần mềm game</li>
+                                    <li>CD/DVD</li>
+                                    <li>Sách</li>
+                                    <li>Xe máy/Xe ga</li>
+                                </ul>
+                                <p><strong>Thông tin cần xác minh:</strong> Địa chỉ, Họ tên, Nghề nghiệp, Tuổi</p>
+                            </div>
+                            <div class="tip-en">
+                                <p><strong>ID required even under 10,000 yen:</strong></p>
+                                <ul>
+                                    <li>Game software</li>
+                                    <li>CD/DVD</li>
+                                    <li>Books</li>
+                                    <li>Motorcycles/Scooters</li>
+                                </ul>
+                                <p><strong>Items to verify:</strong> Address, Name, Occupation, Age</p>
+                            </div>
+                            <div class="tip-zh">
+                                <p><strong>不满1万日元也需确认：</strong></p>
+                                <ul>
+                                    <li>游戏软件</li>
+                                    <li>CD/DVD</li>
+                                    <li>书籍</li>
+                                    <li>摩托车/原付</li>
+                                </ul>
+                                <p><strong>确认项目：</strong>地址、姓名、职业、年龄</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip 5: Hình phạt -->
+                    <div class="tip-card">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-gavel"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">罰則の覚え方</h3>
+                                <h4 class="tip-title-vi">Cách nhớ hình phạt</h4>
+                                <h4 class="tip-title-en">Penalty Guidelines</h4>
+                                <h4 class="tip-title-zh">处罚记忆方法</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <p><strong>最重（3年/100万円）：</strong></p>
+                                <ul>
+                                    <li>無許可営業</li>
+                                    <li>名義貸し</li>
+                                    <li>不正手段での許可取得</li>
+                                </ul>
+                                <p><strong>中（6ヶ月/30万円）：</strong>帳簿義務違反</p>
+                                <p><strong>軽（10万円以下）：</strong>立入検査拒否、許可証返納違反</p>
+                            </div>
+                            <div class="tip-vi">
+                                <p><strong>Nặng nhất (3 năm/1.000.000 yên):</strong></p>
+                                <ul>
+                                    <li>Kinh doanh không phép</li>
+                                    <li>Cho mượn tên</li>
+                                    <li>Lấy giấy phép bằng thủ đoạn gian dối</li>
+                                </ul>
+                                <p><strong>Trung bình (6 tháng/300.000 yên):</strong> Vi phạm nghĩa vụ ghi sổ</p>
+                                <p><strong>Nhẹ (dưới 100.000 yên):</strong> Từ chối kiểm tra, vi phạm trả giấy phép</p>
+                            </div>
+                            <div class="tip-en">
+                                <p><strong>Heaviest (3 years/1,000,000 yen):</strong></p>
+                                <ul>
+                                    <li>Unlicensed operation</li>
+                                    <li>Lending name/license</li>
+                                    <li>Obtaining license by fraud</li>
+                                </ul>
+                                <p><strong>Medium (6 months/300,000 yen):</strong> Record-keeping violation</p>
+                                <p><strong>Light (under 100,000 yen):</strong> Refusing inspection, license return violation</p>
+                            </div>
+                            <div class="tip-zh">
+                                <p><strong>最重（3年/100万日元）：</strong></p>
+                                <ul>
+                                    <li>无证经营</li>
+                                    <li>借名经营</li>
+                                    <li>以不正当手段取得许可</li>
+                                </ul>
+                                <p><strong>中等（6个月/30万日元）：</strong>违反账簿义务</p>
+                                <p><strong>轻微（10万日元以下）：</strong>拒绝检查、违反许可证归还</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip 6: Cooling-off -->
+                    <div class="tip-card">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-shopping-cart"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">訪問購入とクーリング・オフ</h3>
+                                <h4 class="tip-title-vi">Mua hàng tại nhà và Cooling-off</h4>
+                                <h4 class="tip-title-en">Door-to-Door Purchase & Cooling-Off</h4>
+                                <h4 class="tip-title-zh">上门收购与冷静期</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <p><strong>クーリング・オフ対象：</strong></p>
+                                <ul>
+                                    <li>貴金属、ブランド品 → 8日間解除可能</li>
+                                </ul>
+                                <p><strong>対象外（解除不可）：</strong></p>
+                                <ul>
+                                    <li>家具、大型家電、書籍、CD/DVD、自動車</li>
+                                </ul>
+                                <p>引渡し拒絶権あり（8日間）</p>
+                            </div>
+                            <div class="tip-vi">
+                                <p><strong>Đối tượng Cooling-off:</strong></p>
+                                <ul>
+                                    <li>Kim loại quý, hàng hiệu → Có thể hủy trong 8 ngày</li>
+                                </ul>
+                                <p><strong>Không thuộc đối tượng:</strong></p>
+                                <ul>
+                                    <li>Đồ nội thất, đồ điện lớn, sách, CD/DVD, ô tô</li>
+                                </ul>
+                                <p>Có quyền từ chối giao hàng (8 ngày)</p>
+                            </div>
+                            <div class="tip-en">
+                                <p><strong>Cooling-off applicable:</strong></p>
+                                <ul>
+                                    <li>Precious metals, brand items → Can cancel within 8 days</li>
+                                </ul>
+                                <p><strong>Not applicable:</strong></p>
+                                <ul>
+                                    <li>Furniture, large appliances, books, CD/DVD, automobiles</li>
+                                </ul>
+                                <p>Right to refuse delivery (8 days)</p>
+                            </div>
+                            <div class="tip-zh">
+                                <p><strong>冷静期适用对象：</strong></p>
+                                <ul>
+                                    <li>贵金属、品牌商品 → 8天内可解除</li>
+                                </ul>
+                                <p><strong>不适用对象：</strong></p>
+                                <ul>
+                                    <li>家具、大型家电、书籍、CD/DVD、汽车</li>
+                                </ul>
+                                <p>有拒绝交付权（8天）</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip 7: Quyền hạn cảnh sát -->
+                    <div class="tip-card">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-shield-alt"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">警察の権限</h3>
+                                <h4 class="tip-title-vi">Quyền hạn của cảnh sát</h4>
+                                <h4 class="tip-title-en">Police Authority</h4>
+                                <h4 class="tip-title-zh">警察权限</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <ul>
+                                    <li>品触れの発行（6ヶ月保存義務）</li>
+                                    <li>差止め命令（30日以内の保管）</li>
+                                    <li>立ち入り調査（拒否不可）</li>
+                                </ul>
+                                <p><strong>盗品の回復：</strong>被害者は2年間無償返還請求可能</p>
+                            </div>
+                            <div class="tip-vi">
+                                <ul>
+                                    <li>Phát hành thông báo hàng (phải lưu 6 tháng)</li>
+                                    <li>Lệnh giữ hàng (trong 30 ngày)</li>
+                                    <li>Kiểm tra tại chỗ (không được từ chối)</li>
+                                </ul>
+                                <p><strong>Thu hồi đồ ăn cắp:</strong> Nạn nhân có thể yêu cầu trả lại miễn phí trong 2 năm</p>
+                            </div>
+                            <div class="tip-en">
+                                <ul>
+                                    <li>Issue stolen goods notice (must keep 6 months)</li>
+                                    <li>Hold order (within 30 days)</li>
+                                    <li>On-site inspection (cannot refuse)</li>
+                                </ul>
+                                <p><strong>Stolen goods recovery:</strong> Victims can request free return for 2 years</p>
+                            </div>
+                            <div class="tip-zh">
+                                <ul>
+                                    <li>发行品触（需保存6个月）</li>
+                                    <li>扣押命令（30天内保管）</li>
+                                    <li>现场检查（不可拒绝）</li>
+                                </ul>
+                                <p><strong>赃物回复：</strong>被害者2年内可要求无偿归还</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip 8: PSC/PSE và Tái chế -->
+                    <div class="tip-card">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-certificate"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">PSCマークと家電リサイクル</h3>
+                                <h4 class="tip-title-vi">Nhãn PSC và Tái chế đồ gia dụng</h4>
+                                <h4 class="tip-title-en">PSC Mark & Home Appliance Recycling</h4>
+                                <h4 class="tip-title-zh">PSC标志与家电回收</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <p><strong>PSCマーク必須：</strong></p>
+                                <ul>
+                                    <li>丸：圧力鍋、ヘルメット、登山ロープ</li>
+                                    <li>菱形：石油ストーブ、ライター</li>
+                                </ul>
+                                <p><strong>家電4品目：</strong></p>
+                                <ul>
+                                    <li>エアコン、テレビ、冷蔵庫、洗濯機</li>
+                                </ul>
+                            </div>
+                            <div class="tip-vi">
+                                <p><strong>Bắt buộc có nhãn PSC:</strong></p>
+                                <ul>
+                                    <li>Tròn: Nồi áp suất, mũ bảo hiểm, dây leo núi</li>
+                                    <li>Hình thoi: Lò sưởi dầu, bật lửa</li>
+                                </ul>
+                                <p><strong>4 loại đồ gia dụng:</strong></p>
+                                <ul>
+                                    <li>Điều hòa, TV, tủ lạnh, máy giặt</li>
+                                </ul>
+                            </div>
+                            <div class="tip-en">
+                                <p><strong>PSC Mark required:</strong></p>
+                                <ul>
+                                    <li>Round: Pressure cooker, helmet, climbing rope</li>
+                                    <li>Diamond: Kerosene heater, lighter</li>
+                                </ul>
+                                <p><strong>4 Home Appliances:</strong></p>
+                                <ul>
+                                    <li>Air conditioner, TV, refrigerator, washing machine</li>
+                                </ul>
+                            </div>
+                            <div class="tip-zh">
+                                <p><strong>必须有PSC标志：</strong></p>
+                                <ul>
+                                    <li>圆形：压力锅、头盔、登山绳</li>
+                                    <li>菱形：煤油炉、打火机</li>
+                                </ul>
+                                <p><strong>家电4品目：</strong></p>
+                                <ul>
+                                    <li>空调、电视、冰箱、洗衣机</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip 9: Lời khuyên ngày thi -->
+                    <div class="tip-card full-width">
+                        <div class="tip-header">
+                            <div class="tip-icon"><i class="fas fa-star"></i></div>
+                            <div class="tip-titles">
+                                <h3 class="tip-title-ja">試験当日のアドバイス</h3>
+                                <h4 class="tip-title-vi">Lời khuyên ngày thi</h4>
+                                <h4 class="tip-title-en">Exam Day Tips</h4>
+                                <h4 class="tip-title-zh">考试当天建议</h4>
+                            </div>
+                        </div>
+                        <div class="tip-content">
+                            <div class="tip-ja">
+                                <ul>
+                                    <li>数字（日数、金額、期間）は特に注意</li>
+                                    <li>「〜ではない」「含まれない」などの否定形に注意</li>
+                                    <li>迷ったら消去法で絞り込む</li>
+                                    <li>時間配分：1問1分を目安に</li>
+                                    <li>見直し時間を確保する</li>
+                                    <li>偽ブランド品販売は詐欺罪（10年以下）になる可能性</li>
+                                </ul>
+                            </div>
+                            <div class="tip-vi">
+                                <ul>
+                                    <li>Chú ý đặc biệt các con số (ngày, tiền, thời gian)</li>
+                                    <li>Chú ý câu phủ định như "không phải", "không bao gồm"</li>
+                                    <li>Khi phân vân, dùng phương pháp loại trừ</li>
+                                    <li>Phân bổ thời gian: khoảng 1 phút/câu</li>
+                                    <li>Dành thời gian kiểm tra lại</li>
+                                    <li>Bán hàng giả có thể bị tội lừa đảo (dưới 10 năm tù)</li>
+                                </ul>
+                            </div>
+                            <div class="tip-en">
+                                <ul>
+                                    <li>Pay special attention to numbers (days, amounts, periods)</li>
+                                    <li>Watch for negative phrases like "not", "does not include"</li>
+                                    <li>When unsure, use elimination method</li>
+                                    <li>Time allocation: about 1 minute per question</li>
+                                    <li>Reserve time for review</li>
+                                    <li>Selling counterfeits may constitute fraud (up to 10 years)</li>
+                                </ul>
+                            </div>
+                            <div class="tip-zh">
+                                <ul>
+                                    <li>特别注意数字（天数、金额、期间）</li>
+                                    <li>注意否定句如"不是"、"不包括"</li>
+                                    <li>犹豫时用排除法</li>
+                                    <li>时间分配：每题约1分钟</li>
+                                    <li>预留检查时间</li>
+                                    <li>销售假货可能构成诈骗罪（10年以下）</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="bottom-nav-item active" data-page="home">
+            <i class="fas fa-home"></i>
+            <span>ホーム</span>
+        </button>
+        <button class="bottom-nav-item" data-page="study">
+            <i class="fas fa-book-open"></i>
+            <span>学習</span>
+        </button>
+        <button class="bottom-nav-item" data-page="test">
+            <i class="fas fa-clipboard-check"></i>
+            <span>テスト</span>
+        </button>
+        <button class="bottom-nav-item" data-page="tips">
+            <i class="fas fa-lightbulb"></i>
+            <span>コツ</span>
+        </button>
+        <button class="bottom-nav-item" id="lang-toggle">
+            <i class="fas fa-globe"></i>
+            <span>言語</span>
+        </button>
+    </nav>
+
+    <!-- Mobile Language Modal -->
+    <div class="lang-modal" id="lang-modal">
+        <div class="lang-modal-content">
+            <h3>言語選択 / Select Language</h3>
+            <button class="lang-modal-btn active" data-lang="ja">🇯🇵 日本語</button>
+            <button class="lang-modal-btn" data-lang="vi">🇻🇳 Tiếng Việt</button>
+            <button class="lang-modal-btn" data-lang="en">🇬🇧 English</button>
+            <button class="lang-modal-btn" data-lang="zh">🇨🇳 中文</button>
+            <button class="lang-modal-btn" data-lang="ja-vi">🇯🇵+🇻🇳 日本語+Việt</button>
+            <button class="lang-modal-close" id="lang-modal-close">閉じる / Close</button>
         </div>
     </div>
 
-    <script>
-        let allQuizData = []; // 全データを格納するプール
-        let currentQuizSet = []; // 今回出題する50問
-        let currentQuestion = 0;
-        let score = 0;
-        const QUESTIONS_TO_ASK = 50; // 出題数設定
+    <!-- Confirm Reset Modal -->
+    <div class="confirm-modal" id="confirm-modal">
+        <div class="confirm-modal-content">
+            <h3 id="confirm-title">統計をリセット</h3>
+            <p id="confirm-message">学習履歴と正答率がリセットされます。よろしいですか？</p>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn-cancel" onclick="closeConfirmModal()">キャンセル</button>
+                <button class="confirm-btn-confirm" onclick="confirmResetStats()">リセット</button>
+            </div>
+        </div>
+    </div>
 
-        // 要素の取得
-        const quizBox = document.getElementById("quiz-box");
-        const qSection = document.getElementById("q-section");
-        const loadingMsg = document.getElementById("loading-msg");
-        const errorMsg = document.getElementById("error-msg");
-        const questionText = document.getElementById("question-text");
-        const optionsList = document.getElementById("options-list");
-        const nextBtn = document.getElementById("next-btn");
-        const currentQSpan = document.getElementById("current-q");
-        const totalQSpan = document.getElementById("total-q");
-        const feedback = document.getElementById("feedback");
-        const resultBox = document.getElementById("result-box");
-
-        // CSVをロードする関数
-        async function fetchQuizData() {
-            try {
-                // キャッシュ回避のためにタイムスタンプを付与
-                const response = await fetch('quiz_data.csv?' + new Date().getTime());
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const text = await response.text();
-                parseCSV(text);
-            } catch (e) {
-                loadingMsg.style.display = 'none';
-                errorMsg.style.display = 'block';
-                errorMsg.innerHTML = "エラー: CSVファイルを読み込めませんでした。<br>詳細: " + e.message;
-            }
-        }
-
-        // CSVパース関数
-        function parseCSV(text) {
-            const lines = text.trim().split('\n');
-
-            // 1行目(ヘッダー)以外を処理
-            for (let i = 1; i < lines.length; i++) {
-                const row = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-
-                if (row && row.length >= 7) {
-                    const clean = (str) => str ? str.replace(/^"|"$/g, '').replace(/""/g, '"') : "";
-
-                    allQuizData.push({
-                        question: clean(row[0]),
-                        options: [clean(row[1]), clean(row[2]), clean(row[3]), clean(row[4])],
-                        answer: parseInt(clean(row[5])),
-                        explanation: clean(row[6])
-                    });
-                }
-            }
-
-            startQuiz();
-        }
-
-        // 配列をシャッフルする関数（Fisher-Yates）
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        function startQuiz() {
-            if (allQuizData.length === 0) {
-                loadingMsg.textContent = "データが見つかりませんでした。";
-                return;
-            }
-
-            // 全データからランダムに抽出
-            // 1. まず全データをシャッフル
-            const shuffled = shuffleArray([...allQuizData]); // 元データを壊さないようコピー
-
-            // 2. 先頭から設定数（50問）だけ切り出す
-            // データが50問未満の場合はあるだけ全部出す
-            currentQuizSet = shuffled.slice(0, Math.min(QUESTIONS_TO_ASK, shuffled.length));
-
-            loadingMsg.style.display = 'none';
-            qSection.style.display = 'block';
-
-            // 分母を表示（例: 50）
-            totalQSpan.textContent = currentQuizSet.length;
-
-            loadQuestion();
-        }
-
-        function loadQuestion() {
-            const q = currentQuizSet[currentQuestion];
-            questionText.textContent = q.question;
-            currentQSpan.textContent = currentQuestion + 1;
-            optionsList.innerHTML = "";
-            feedback.style.display = "none";
-            nextBtn.style.display = "none";
-
-            q.options.forEach((opt, index) => {
-                const li = document.createElement("li");
-                const btn = document.createElement("button");
-                btn.className = "option-btn";
-                btn.textContent = opt;
-                btn.onclick = () => checkAnswer(index, btn);
-                li.appendChild(btn);
-                optionsList.appendChild(li);
-            });
-        }
-
-        function checkAnswer(selectedIndex, btnElement) {
-            const q = currentQuizSet[currentQuestion];
-            const buttons = document.querySelectorAll(".option-btn");
-
-            buttons.forEach(btn => btn.disabled = true);
-
-            if (selectedIndex === q.answer) {
-                btnElement.classList.add("correct");
-                score++;
-            } else {
-                btnElement.classList.add("wrong");
-                buttons[q.answer].classList.add("correct");
-            }
-
-            feedback.innerHTML = "<strong>解説:</strong><br>" + q.explanation;
-            feedback.style.display = "block";
-            nextBtn.style.display = "block";
-        }
-
-        nextBtn.onclick = () => {
-            currentQuestion++;
-            if (currentQuestion < currentQuizSet.length) {
-                loadQuestion();
-            } else {
-                showResult();
-            }
-        };
-
-        function showResult() {
-            quizBox.style.display = "none";
-            resultBox.style.display = "block";
-            document.getElementById("score-val").textContent = score;
-            document.getElementById("total-val").textContent = currentQuizSet.length;
-        }
-
-        // 実行開始
-        fetchQuizData();
-    </script>
+    <script src="app.js"></script>
+</body>
+</html>
