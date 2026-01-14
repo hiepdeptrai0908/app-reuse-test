@@ -739,7 +739,7 @@ body {
 .question-card {
   background: var(--card-bg);
   border-radius: 20px;
-  padding: 40px;
+  padding: 20px;
   box-shadow: var(--shadow-lg);
   margin-bottom: 30px;
 }
