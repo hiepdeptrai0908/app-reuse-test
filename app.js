@@ -88,8 +88,12 @@ const uiText = {
         explanation: '解説：',
         // Tips page
         tipsTitle: '合格のコツ', tipsSub: '効率的な学習方法と試験対策',
+        // Docs page
+        docsTitle: '学習資料', docsSub: 'リユース検定ポケットメモ',
+        pdfFallback: 'PDFを表示できない場合は、下のボタンからダウンロードしてください。',
+        download: 'ダウンロード',
         // Bottom nav
-        navHome: 'ホーム', navStudy: '学習', navTest: 'テスト', navTips: 'コツ', navLang: '言語',
+        navHome: 'ホーム', navStudy: '学習', navTest: 'テスト', navTips: 'コツ', navDocs: '資料', navLang: '言語',
         // Reset
         resetStats: '統計をリセット', resetConfirm: '学習履歴と正答率がリセットされます。よろしいですか？',
         cancel: 'キャンセル', reset: 'リセット'
@@ -116,7 +120,10 @@ const uiText = {
         needMore: 'Cần cố gắng thêm!',
         explanation: 'Giải thích: ',
         tipsTitle: 'Mẹo thi đậu', tipsSub: 'Phương pháp học hiệu quả và chiến lược thi',
-        navHome: 'Chủ', navStudy: 'Học', navTest: 'Thi', navTips: 'Mẹo', navLang: 'Ngôn ngữ',
+        docsTitle: 'Tài liệu', docsSub: 'Sổ tay Reuse Kentei',
+        pdfFallback: 'Nếu không xem được PDF, hãy tải xuống bằng nút bên dưới.',
+        download: 'Tải xuống',
+        navHome: 'Chủ', navStudy: 'Học', navTest: 'Thi', navTips: 'Mẹo', navDocs: 'Tài liệu', navLang: 'Ngôn ngữ',
         resetStats: 'Xóa thống kê', resetConfirm: 'Lịch sử học và tỷ lệ đúng sẽ bị xóa. Bạn có chắc không?',
         cancel: 'Hủy', reset: 'Xóa'
     },
@@ -142,7 +149,10 @@ const uiText = {
         needMore: 'Keep studying!',
         explanation: 'Explanation: ',
         tipsTitle: 'Exam Tips', tipsSub: 'Effective study methods and strategies',
-        navHome: 'Home', navStudy: 'Study', navTest: 'Test', navTips: 'Tips', navLang: 'Lang',
+        docsTitle: 'Documents', docsSub: 'Reuse License Pocket Memo',
+        pdfFallback: 'If PDF cannot be displayed, please download using the button below.',
+        download: 'Download',
+        navHome: 'Home', navStudy: 'Study', navTest: 'Test', navTips: 'Tips', navDocs: 'Docs', navLang: 'Lang',
         resetStats: 'Reset Stats', resetConfirm: 'This will clear all study history. Are you sure?',
         cancel: 'Cancel', reset: 'Reset'
     },
@@ -168,7 +178,10 @@ const uiText = {
         needMore: '继续加油！',
         explanation: '解析：',
         tipsTitle: '通关技巧', tipsSub: '高效学习方法与考试策略',
-        navHome: '首页', navStudy: '学习', navTest: '测试', navTips: '技巧', navLang: '语言',
+        docsTitle: '学习资料', docsSub: '再利用检定口袋笔记',
+        pdfFallback: '如果无法显示PDF，请点击下方按钮下载。',
+        download: '下载',
+        navHome: '首页', navStudy: '学习', navTest: '测试', navTips: '技巧', navDocs: '资料', navLang: '语言',
         resetStats: '重置统计', resetConfirm: '学习记录和正确率将被清除。确定吗？',
         cancel: '取消', reset: '重置'
     }
@@ -1042,6 +1055,7 @@ function updateAllText() {
         study: t('navStudy'),
         test: t('navTest'),
         tips: t('navTips'),
+        docs: t('navDocs'),
         lang: t('navLang')
     };
     
@@ -1105,6 +1119,28 @@ function updateAllText() {
     // Tips page
     document.querySelector('#tips-page .page-header h1').innerHTML = `<i class="fas fa-lightbulb"></i> ${t('tipsTitle')}`;
     document.querySelector('#tips-page .subtitle').textContent = t('tipsSub');
+
+    // Docs page
+    document.querySelector('#docs-title').textContent = t('docsTitle');
+    document.querySelector('#docs-subtitle').textContent = t('docsSub');
+    document.querySelector('#pdf-fallback-text').textContent = t('pdfFallback');
+    document.querySelector('#pdf-download-text').textContent = t('download');
+
+    // Navigation docs
+    const docsLabels = { ja: '資料', vi: 'Tài liệu', en: 'Docs', zh: '资料' };
+    const lang = currentLang.startsWith('ja') ? 'ja' : currentLang;
+    
+    // Update sidebar docs nav
+    const sidebarDocsNav = document.querySelector('.nav-item[data-page="docs"] span');
+    if (sidebarDocsNav) {
+        sidebarDocsNav.textContent = docsLabels[lang] || docsLabels.ja;
+    }
+    
+    // Update bottom nav docs
+    const bottomDocsNav = document.querySelector('.bottom-nav-item[data-page="docs"] span');
+    if (bottomDocsNav) {
+        bottomDocsNav.textContent = docsLabels[lang] || docsLabels.ja;
+    }
 
     // Reset button
     const resetBtnText = currentLang === 'vi' ? 'Xóa thống kê' : '統計をリセット';

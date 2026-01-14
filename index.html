@@ -29,6 +29,9 @@
                 <li class="nav-item" data-page="tips">
                     <i class="fas fa-lightbulb"></i><span>合格のコツ</span>
                 </li>
+                <li class="nav-item" data-page="docs">
+                    <i class="fas fa-file-pdf"></i><span>資料</span>
+                </li>
             </ul>
             <div class="language-switch">
                 <button class="lang-btn active" data-lang="ja">🇯🇵 日本語</button>
@@ -41,6 +44,10 @@
 
         <!-- Main Content -->
         <main class="main-content">
+            <!-- Mobile Language Button -->
+            <button class="mobile-lang-btn" id="lang-toggle">
+                <i class="fas fa-globe"></i>
+            </button>
             <!-- Home Page -->
             <div id="home-page" class="page active">
                 <div class="page-header">
@@ -909,6 +916,23 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Docs Page -->
+            <div id="docs-page" class="page">
+                <div class="page-header">
+                    <h1><i class="fas fa-file-pdf"></i> <span id="docs-title">学習資料</span></h1>
+                    <p class="subtitle" id="docs-subtitle">リユース検定ポケットメモ</p>
+                </div>
+                <div class="pdf-container">
+                    <iframe id="pdf-viewer" src="reuse-kentei-memo.pdf" type="application/pdf"></iframe>
+                </div>
+                <div class="pdf-fallback">
+                    <p id="pdf-fallback-text">PDFを表示できない場合は、下のボタンからダウンロードしてください。</p>
+                    <a href="reuse-kentei-memo.pdf" download class="action-btn primary">
+                        <i class="fas fa-download"></i> <span id="pdf-download-text">ダウンロード</span>
+                    </a>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -930,9 +954,9 @@
             <i class="fas fa-lightbulb"></i>
             <span>コツ</span>
         </button>
-        <button class="bottom-nav-item" id="lang-toggle">
-            <i class="fas fa-globe"></i>
-            <span>言語</span>
+        <button class="bottom-nav-item" data-page="docs">
+            <i class="fas fa-file-pdf"></i>
+            <span>資料</span>
         </button>
     </nav>
 
