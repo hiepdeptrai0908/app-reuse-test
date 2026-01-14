@@ -942,6 +942,33 @@ function closeConfirmModal() {
     document.getElementById('confirm-modal').classList.remove('show');
 }
 
+// PDF Dialog functions
+function openPdfDialog() {
+    const dialog = document.getElementById('pdf-dialog');
+    const viewer = document.getElementById('pdf-dialog-viewer');
+    viewer.src = 'reuse-kentei-memo.pdf';
+    dialog.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePdfDialog() {
+    const dialog = document.getElementById('pdf-dialog');
+    const viewer = document.getElementById('pdf-dialog-viewer');
+    dialog.classList.remove('show');
+    viewer.src = '';
+    document.body.style.overflow = '';
+}
+
+// Close PDF dialog with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const pdfDialog = document.getElementById('pdf-dialog');
+        if (pdfDialog && pdfDialog.classList.contains('show')) {
+            closePdfDialog();
+        }
+    }
+});
+
 function confirmResetStats() {
     stats = { studied: 0, correct: 0, total: 0 };
     bookmarkedQuestions = [];
@@ -1129,6 +1156,10 @@ function updateAllText() {
     // Navigation docs
     const docsLabels = { ja: '資料', vi: 'Tài liệu', en: 'Docs', zh: '资料' };
     const lang = currentLang.startsWith('ja') ? 'ja' : currentLang;
+    
+    // PDF expand text
+    const expandTexts = { ja: 'クリックで拡大', vi: 'Nhấn để phóng to', en: 'Click to expand', zh: '点击放大' };
+    document.querySelector('#pdf-expand-text').textContent = expandTexts[lang] || expandTexts.ja;
     
     // Update sidebar docs nav
     const sidebarDocsNav = document.querySelector('.nav-item[data-page="docs"] span');

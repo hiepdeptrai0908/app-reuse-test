@@ -1018,13 +1018,55 @@ body {
   overflow: hidden;
   box-shadow: var(--shadow);
   margin-bottom: 20px;
+  /* A4 aspect ratio: 210mm x 297mm = 1:1.414 */
+  max-width: 210mm;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pdf-container:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pdf-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+  color: white;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.pdf-overlay i {
+  font-size: 3rem;
+}
+
+.pdf-container:hover .pdf-overlay {
+  opacity: 1;
 }
 
 .pdf-container iframe {
   width: 100%;
-  height: 70vh;
-  min-height: 500px;
+  /* A4 height based on width */
+  height: calc(210mm * 1.414);
+  max-height: 85vh;
   border: none;
+  pointer-events: none;
 }
 
 .pdf-fallback {
@@ -1039,10 +1081,106 @@ body {
   margin-bottom: 16px;
 }
 
+/* PDF Dialog - Google Drive style */
+.pdf-dialog {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #202124;
+  z-index: 5000;
+  flex-direction: column;
+  animation: fadeIn 0.2s ease;
+}
+
+.pdf-dialog.show {
+  display: flex;
+}
+
+.pdf-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #3c4043;
+  color: white;
+  min-height: 48px;
+}
+
+.pdf-dialog-title {
+  font-size: 1rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-dialog-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pdf-dialog-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: background 0.2s;
+  text-decoration: none;
+}
+
+.pdf-dialog-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pdf-dialog-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.pdf-dialog-body iframe {
+  width: 100%;
+  height: 100%;
+  max-width: 1000px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+}
+
 @media (max-width: 900px) {
+  .pdf-container {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+  
   .pdf-container iframe {
-    height: 60vh;
+    height: 70vh;
     min-height: 400px;
+  }
+  
+  .pdf-dialog-header {
+    padding: 8px 12px;
+  }
+  
+  .pdf-dialog-title {
+    font-size: 0.9rem;
+  }
+  
+  .pdf-dialog-body {
+    padding: 10px;
   }
 }
 
