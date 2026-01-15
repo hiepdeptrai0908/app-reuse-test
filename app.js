@@ -276,13 +276,10 @@ function setupEventListeners() {
         });
     });
 
-    // Language switch with smooth transition (sidebar)
+    // Language switch (sidebar)
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             if (btn.classList.contains('active')) return;
-            
-            // Add transition class
-            document.querySelector('.main-content').classList.add('lang-switching');
             
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -293,12 +290,7 @@ function setupEventListeners() {
             
             currentLang = btn.dataset.lang;
             saveLanguage();
-            
-            // Small delay for smooth feel
-            setTimeout(() => {
-                updateUI();
-                document.querySelector('.main-content').classList.remove('lang-switching');
-            }, 50);
+            updateUI();
         });
     });
 
@@ -333,12 +325,13 @@ function setupEventListeners() {
         if (currentGroup) initStudyMode(currentGroup);
     });
 
-    // Group cards click
-    document.querySelectorAll('.group-card').forEach(card => {
-        card.addEventListener('click', () => {
+    // Group cards click - using event delegation
+    document.getElementById('study-groups').addEventListener('click', (e) => {
+        const card = e.target.closest('.group-card');
+        if (card) {
             const group = card.dataset.group;
             selectStudyGroup(group);
-        });
+        }
     });
 
     // Back to groups button
@@ -428,6 +421,15 @@ function getTranslation(type, id) {
 
 // Navigation
 function navigateTo(page) {
+    // Reset any modal states
+    document.body.style.overflow = '';
+    
+    // Close PDF dialog if open
+    const pdfDialog = document.getElementById('pdf-dialog');
+    if (pdfDialog && pdfDialog.classList.contains('show')) {
+        closePdfDialog();
+    }
+    
     // Update sidebar nav
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.toggle('active', item.dataset.page === page);
@@ -573,6 +575,7 @@ function showStudyGroups() {
     currentGroup = null;
     document.getElementById('study-groups').style.display = 'grid';
     document.getElementById('study-flashcard').style.display = 'none';
+    document.body.style.overflow = '';
     updateGroupCards();
 }
 
@@ -671,9 +674,12 @@ function loadStudyCard() {
     const qText = transQ || q.question;
     document.getElementById('study-question').textContent = currentLang.startsWith('ja') ? q.question : qText;
 
+    // Secondary language display
     const qViEl = document.getElementById('study-question-vi');
-    if (currentLang === 'ja-vi' && translations.vi.questions[q.id]) {
-        qViEl.textContent = '🇻🇳 ' + translations.vi.questions[q.id];
+    const secondLang = currentLang.split('-')[1]; // vi, en, or zh
+    if (secondLang && translations[secondLang] && translations[secondLang].questions[q.id]) {
+        const flags = { vi: '🇻🇳', en: '🇬🇧', zh: '🇨🇳' };
+        qViEl.textContent = flags[secondLang] + ' ' + translations[secondLang].questions[q.id];
         qViEl.style.display = 'block';
     } else {
         qViEl.style.display = 'none';
@@ -688,8 +694,9 @@ function loadStudyCard() {
     document.getElementById('study-explanation').textContent = currentLang.startsWith('ja') ? q.explanation : expText;
 
     const expViEl = document.getElementById('study-explanation-vi');
-    if (currentLang === 'ja-vi' && translations.vi.explanations[q.id]) {
-        expViEl.textContent = '🇻🇳 ' + translations.vi.explanations[q.id];
+    if (secondLang && translations[secondLang] && translations[secondLang].explanations[q.id]) {
+        const flags = { vi: '🇻🇳', en: '🇬🇧', zh: '🇨🇳' };
+        expViEl.textContent = flags[secondLang] + ' ' + translations[secondLang].explanations[q.id];
         expViEl.style.display = 'block';
     } else {
         expViEl.style.display = 'none';
@@ -794,6 +801,8 @@ function loadTestQuestion() {
     const transQ = getTranslation('questions', q.id);
     const transOpts = getTranslation('options', q.id);
     const transExp = getTranslation('explanations', q.id);
+    const secondLang = currentLang.split('-')[1]; // vi, en, or zh
+    const flags = { vi: '🇻🇳', en: '🇬🇧', zh: '🇨🇳' };
 
     document.getElementById('test-current').textContent = testIndex + 1;
     document.getElementById('progress-fill').style.width = 
@@ -804,8 +813,8 @@ function loadTestQuestion() {
     document.getElementById('test-question').textContent = currentLang.startsWith('ja') ? q.question : qText;
 
     const qViEl = document.getElementById('test-question-vi');
-    if (currentLang === 'ja-vi' && translations.vi.questions[q.id]) {
-        qViEl.textContent = '🇻🇳 ' + translations.vi.questions[q.id];
+    if (secondLang && translations[secondLang] && translations[secondLang].questions[q.id]) {
+        qViEl.textContent = flags[secondLang] + ' ' + translations[secondLang].questions[q.id];
         qViEl.style.display = 'block';
     } else {
         qViEl.style.display = 'none';
@@ -823,8 +832,8 @@ function loadTestQuestion() {
         const optText = transOpts ? transOpts[idx] : opt;
         btn.innerHTML = currentLang.startsWith('ja') ? opt : optText;
         
-        if (currentLang === 'ja-vi' && translations.vi.options[q.id] && translations.vi.options[q.id][idx]) {
-            btn.innerHTML = opt + `<span class="option-vi">🇻🇳 ${translations.vi.options[q.id][idx]}</span>`;
+        if (secondLang && translations[secondLang] && translations[secondLang].options[q.id] && translations[secondLang].options[q.id][idx]) {
+            btn.innerHTML = opt + `<span class="option-vi">${flags[secondLang]} ${translations[secondLang].options[q.id][idx]}</span>`;
         }
         
         // Nếu đã trả lời câu này, hiển thị kết quả
@@ -849,8 +858,8 @@ function loadTestQuestion() {
         const expText = transExp || q.explanation;
         
         let feedbackHTML = `<strong>${expLabel}</strong>${currentLang.startsWith('ja') ? q.explanation : expText}`;
-        if (currentLang === 'ja-vi' && translations.vi.explanations[q.id]) {
-            feedbackHTML += `<div class="feedback-vi">🇻🇳 ${translations.vi.explanations[q.id]}</div>`;
+        if (secondLang && translations[secondLang] && translations[secondLang].explanations[q.id]) {
+            feedbackHTML += `<div class="feedback-vi">${flags[secondLang]} ${translations[secondLang].explanations[q.id]}</div>`;
         }
         
         document.getElementById('feedback-content').innerHTML = feedbackHTML;
@@ -870,6 +879,8 @@ function checkTestAnswer(selected, btnEl) {
     const q = testData[testIndex];
     const transExp = getTranslation('explanations', q.id);
     const buttons = document.querySelectorAll('.option-btn');
+    const secondLang = currentLang.split('-')[1];
+    const flags = { vi: '🇻🇳', en: '🇬🇧', zh: '🇨🇳' };
 
     buttons.forEach(btn => btn.disabled = true);
     
@@ -893,8 +904,8 @@ function checkTestAnswer(selected, btnEl) {
     const expText = transExp || q.explanation;
     
     let feedbackHTML = `<strong>${expLabel}</strong>${currentLang.startsWith('ja') ? q.explanation : expText}`;
-    if (currentLang === 'ja-vi' && translations.vi.explanations[q.id]) {
-        feedbackHTML += `<div class="feedback-vi">🇻🇳 ${translations.vi.explanations[q.id]}</div>`;
+    if (secondLang && translations[secondLang] && translations[secondLang].explanations[q.id]) {
+        feedbackHTML += `<div class="feedback-vi">${flags[secondLang]} ${translations[secondLang].explanations[q.id]}</div>`;
     }
     
     document.getElementById('feedback-content').innerHTML = feedbackHTML;
@@ -1065,14 +1076,16 @@ function updateTestQuestionLanguage() {
     const q = testData[testIndex];
     const transQ = getTranslation('questions', q.id);
     const transOpts = getTranslation('options', q.id);
+    const secondLang = currentLang.split('-')[1];
+    const flags = { vi: '🇻🇳', en: '🇬🇧', zh: '🇨🇳' };
 
     // Update question text
     const qText = transQ || q.question;
     document.getElementById('test-question').textContent = currentLang.startsWith('ja') ? q.question : qText;
 
     const qViEl = document.getElementById('test-question-vi');
-    if (currentLang === 'ja-vi' && translations.vi.questions[q.id]) {
-        qViEl.textContent = '🇻🇳 ' + translations.vi.questions[q.id];
+    if (secondLang && translations[secondLang] && translations[secondLang].questions[q.id]) {
+        qViEl.textContent = flags[secondLang] + ' ' + translations[secondLang].questions[q.id];
         qViEl.style.display = 'block';
     } else {
         qViEl.style.display = 'none';
@@ -1087,8 +1100,8 @@ function updateTestQuestionLanguage() {
         
         const optText = transOpts ? transOpts[idx] : q.options[idx];
         
-        if (currentLang === 'ja-vi' && translations.vi.options[q.id] && translations.vi.options[q.id][idx]) {
-            btn.innerHTML = q.options[idx] + `<span class="option-vi">🇻🇳 ${translations.vi.options[q.id][idx]}</span>`;
+        if (secondLang && translations[secondLang] && translations[secondLang].options[q.id] && translations[secondLang].options[q.id][idx]) {
+            btn.innerHTML = q.options[idx] + `<span class="option-vi">${flags[secondLang]} ${translations[secondLang].options[q.id][idx]}</span>`;
         } else {
             btn.innerHTML = currentLang.startsWith('ja') ? q.options[idx] : optText;
         }
@@ -1107,119 +1120,127 @@ function updateTestQuestionLanguage() {
         const expText = transExp || q.explanation;
         
         let feedbackHTML = `<strong>${expLabel}</strong>${currentLang.startsWith('ja') ? q.explanation : expText}`;
-        if (currentLang === 'ja-vi' && translations.vi.explanations[q.id]) {
-            feedbackHTML += `<div class="feedback-vi">🇻🇳 ${translations.vi.explanations[q.id]}</div>`;
+        if (secondLang && translations[secondLang] && translations[secondLang].explanations[q.id]) {
+            feedbackHTML += `<div class="feedback-vi">${flags[secondLang]} ${translations[secondLang].explanations[q.id]}</div>`;
         }
         document.getElementById('feedback-content').innerHTML = feedbackHTML;
     }
 }
 
 function updateAllText() {
-    // Navigation items (sidebar)
-    document.querySelector('[data-page="home"] span').textContent = t('home');
-    document.querySelector('[data-page="study"] span').textContent = t('study');
-    document.querySelector('[data-page="test"] span').textContent = t('test');
-    document.querySelector('[data-page="tips"] span').textContent = t('tips');
-
-    // Bottom nav items
-    const bottomNavLabels = {
-        home: t('navHome'),
-        study: t('navStudy'),
-        test: t('navTest'),
-        tips: t('navTips'),
-        docs: t('navDocs'),
-        lang: t('navLang')
+    const lang = currentLang.startsWith('ja') ? 'ja' : currentLang;
+    
+    // Helper function to safely set text
+    const setText = (selector, text) => {
+        const el = document.querySelector(selector);
+        if (el) el.textContent = text;
     };
     
+    const setHTML = (selector, html) => {
+        const el = document.querySelector(selector);
+        if (el) el.innerHTML = html;
+    };
+
+    // Navigation items (sidebar)
+    setText('.nav-item[data-page="home"] span', t('home'));
+    setText('.nav-item[data-page="study"] span', t('study'));
+    setText('.nav-item[data-page="test"] span', t('test'));
+    setText('.nav-item[data-page="tips"] span', t('tips'));
+    
+    const docsLabels = { ja: '資料', vi: 'Tài liệu', en: 'Docs', zh: '资料' };
+    setText('.nav-item[data-page="docs"] span', docsLabels[lang] || docsLabels.ja);
+
+    // Bottom nav items
     document.querySelectorAll('.bottom-nav-item').forEach(item => {
         const page = item.dataset.page;
-        if (page) {
-            item.querySelector('span').textContent = bottomNavLabels[page];
+        const span = item.querySelector('span');
+        if (!span) return;
+        
+        if (page === 'docs') {
+            span.textContent = docsLabels[lang] || docsLabels.ja;
+        } else if (page === 'home') {
+            span.textContent = t('navHome');
+        } else if (page === 'study') {
+            span.textContent = t('navStudy');
+        } else if (page === 'test') {
+            span.textContent = t('navTest');
+        } else if (page === 'tips') {
+            span.textContent = t('navTips');
         }
     });
-    document.getElementById('lang-toggle').querySelector('span').textContent = bottomNavLabels.lang;
 
     // Home page
-    document.querySelector('#home-page .page-header h1').textContent = t('welcome');
-    document.querySelector('#home-page .subtitle').textContent = t('welcomeSub');
-    document.querySelectorAll('.stat-label')[0].textContent = t('questions');
-    document.querySelectorAll('.stat-label')[1].textContent = t('studied');
-    document.querySelectorAll('.stat-label')[2].textContent = t('accuracy');
-    document.querySelector('.quick-actions .primary').innerHTML = `<i class="fas fa-book-open"></i>${t('startStudy')}`;
-    document.querySelector('.quick-actions .secondary').innerHTML = `<i class="fas fa-clipboard-check"></i>${t('startTest')}`;
+    setText('#home-page .page-header h1', t('welcome'));
+    setText('#home-page .subtitle', t('welcomeSub'));
+    
+    const statLabels = document.querySelectorAll('.stat-label');
+    if (statLabels[0]) statLabels[0].textContent = t('questions');
+    if (statLabels[1]) statLabels[1].textContent = t('studied');
+    if (statLabels[2]) statLabels[2].textContent = t('accuracy');
+    
+    setHTML('.quick-actions .primary', `<i class="fas fa-book-open"></i>${t('startStudy')}`);
+    setHTML('.quick-actions .secondary', `<i class="fas fa-clipboard-check"></i>${t('startTest')}`);
 
     // Study page
-    document.querySelector('#study-page .page-header h1').innerHTML = `<i class="fas fa-book-open"></i> ${t('studyTitle')}`;
-    document.querySelector('#study-page .subtitle').textContent = t('studySub');
-    document.querySelectorAll('#study-flashcard .control-group label')[0].textContent = t('orderLabel');
+    setHTML('#study-page .page-header h1', `<i class="fas fa-book-open"></i> ${t('studyTitle')}`);
+    setText('#study-page .subtitle', t('studySub'));
+    
+    const controlLabels = document.querySelectorAll('#study-flashcard .control-group label');
+    if (controlLabels[0]) controlLabels[0].textContent = t('orderLabel');
 
     const orderSelect = document.getElementById('order-select');
-    orderSelect.options[0].text = t('orderSeq');
-    orderSelect.options[1].text = t('orderRandom');
+    if (orderSelect && orderSelect.options.length >= 2) {
+        orderSelect.options[0].text = t('orderSeq');
+        orderSelect.options[1].text = t('orderRandom');
+    }
 
-    document.querySelector('.card-hint').textContent = t('clickToFlip');
-    document.getElementById('prev-card').innerHTML = `<i class="fas fa-chevron-left"></i> ${t('prev')}`;
-    document.getElementById('next-card').innerHTML = `${t('next')} <i class="fas fa-chevron-right"></i>`;
+    setText('.card-hint', t('clickToFlip'));
+    setHTML('#prev-card', `<i class="fas fa-chevron-left"></i> ${t('prev')}`);
+    setHTML('#next-card', `${t('next')} <i class="fas fa-chevron-right"></i>`);
 
     // Test page
-    document.querySelector('#test-page .page-header h1').innerHTML = `<i class="fas fa-clipboard-check"></i> ${t('testTitle')}`;
-    document.querySelector('#test-page .subtitle').textContent = t('testSub');
-    document.querySelector('.setup-card h3').textContent = t('testSettings');
-    document.querySelectorAll('.setup-option label')[0].textContent = t('questionCount');
-    document.querySelectorAll('.setup-option label')[1].textContent = t('timeLimit');
+    setHTML('#test-page .page-header h1', `<i class="fas fa-clipboard-check"></i> ${t('testTitle')}`);
+    setText('#test-page .subtitle', t('testSub'));
+    setText('.setup-card h3', t('testSettings'));
+    
+    const setupLabels = document.querySelectorAll('.setup-option label');
+    if (setupLabels[0]) setupLabels[0].textContent = t('questionCount');
+    if (setupLabels[1]) setupLabels[1].textContent = t('timeLimit');
     
     const countBtns = document.querySelectorAll('.setup-btn[data-count]');
     const qSuffix = currentLang === 'zh' ? '题' : currentLang === 'en' ? '' : currentLang === 'vi' ? ' câu' : '問';
-    countBtns[0].textContent = '10' + qSuffix;
-    countBtns[1].textContent = '25' + qSuffix;
-    countBtns[2].textContent = '50' + qSuffix;
-    countBtns[3].textContent = t('allQuestions');
+    if (countBtns[0]) countBtns[0].textContent = '10' + qSuffix;
+    if (countBtns[1]) countBtns[1].textContent = '25' + qSuffix;
+    if (countBtns[2]) countBtns[2].textContent = '50' + qSuffix;
+    if (countBtns[3]) countBtns[3].textContent = t('allQuestions');
 
     const timeBtns = document.querySelectorAll('.setup-btn[data-time]');
-    timeBtns[0].textContent = t('noLimit');
-    timeBtns[1].textContent = '30' + t('minutes');
-    timeBtns[2].textContent = '60' + t('minutes');
+    if (timeBtns[0]) timeBtns[0].textContent = t('noLimit');
+    if (timeBtns[1]) timeBtns[1].textContent = '30' + t('minutes');
+    if (timeBtns[2]) timeBtns[2].textContent = '60' + t('minutes');
 
-    document.querySelector('.start-test-btn').innerHTML = `<i class="fas fa-play"></i> ${t('startTestBtn')}`;
-    document.getElementById('prev-question').innerHTML = `<i class="fas fa-arrow-left"></i> ${t('prevQ')}`;
-    document.getElementById('next-question').innerHTML = `${t('nextQ')} <i class="fas fa-arrow-right"></i>`;
+    setHTML('.start-test-btn', `<i class="fas fa-play"></i> ${t('startTestBtn')}`);
+    setHTML('#next-question', `${t('nextQ')} <i class="fas fa-arrow-right"></i>`);
 
     // Result page
-    document.getElementById('result-title').textContent = t('testEnd');
-    document.querySelector('.result-actions .primary').innerHTML = `<i class="fas fa-redo"></i> ${t('retry')}`;
-    document.querySelector('.result-actions .secondary').innerHTML = `<i class="fas fa-search"></i> ${t('review')}`;
+    setText('#result-title', t('testEnd'));
+    setHTML('.result-actions .primary', `<i class="fas fa-redo"></i> ${t('retry')}`);
+    setHTML('.result-actions .secondary', `<i class="fas fa-search"></i> ${t('review')}`);
 
     // Tips page
-    document.querySelector('#tips-page .page-header h1').innerHTML = `<i class="fas fa-lightbulb"></i> ${t('tipsTitle')}`;
-    document.querySelector('#tips-page .subtitle').textContent = t('tipsSub');
+    setHTML('#tips-page .page-header h1', `<i class="fas fa-lightbulb"></i> ${t('tipsTitle')}`);
+    setText('#tips-page .subtitle', t('tipsSub'));
 
     // Docs page
-    document.querySelector('#docs-title').textContent = t('docsTitle');
-    document.querySelector('#docs-subtitle').textContent = t('docsSub');
-    document.querySelector('#pdf-fallback-text').textContent = t('pdfFallback');
-    document.querySelector('#pdf-download-text').textContent = t('download');
-
-    // Navigation docs
-    const docsLabels = { ja: '資料', vi: 'Tài liệu', en: 'Docs', zh: '资料' };
-    const lang = currentLang.startsWith('ja') ? 'ja' : currentLang;
+    setText('#docs-title', t('docsTitle'));
+    setText('#docs-subtitle', t('docsSub'));
+    setText('#pdf-fallback-text', t('pdfFallback'));
+    setText('#pdf-download-text', t('download'));
     
     // PDF expand text
     const expandTexts = { ja: 'クリックで拡大', vi: 'Nhấn để phóng to', en: 'Click to expand', zh: '点击放大' };
-    document.querySelector('#pdf-expand-text').textContent = expandTexts[lang] || expandTexts.ja;
-    
-    // Update sidebar docs nav
-    const sidebarDocsNav = document.querySelector('.nav-item[data-page="docs"] span');
-    if (sidebarDocsNav) {
-        sidebarDocsNav.textContent = docsLabels[lang] || docsLabels.ja;
-    }
-    
-    // Update bottom nav docs
-    const bottomDocsNav = document.querySelector('.bottom-nav-item[data-page="docs"] span');
-    if (bottomDocsNav) {
-        bottomDocsNav.textContent = docsLabels[lang] || docsLabels.ja;
-    }
+    setText('#pdf-expand-text', expandTexts[lang] || expandTexts.ja);
 
     // Reset button
-    const resetBtnText = currentLang === 'vi' ? 'Xóa thống kê' : '統計をリセット';
-    document.querySelector('.reset-stats-btn span').textContent = resetBtnText;
+    setText('.reset-stats-btn span', t('resetStats'));
 }

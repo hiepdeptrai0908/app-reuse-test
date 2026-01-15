@@ -143,20 +143,6 @@ body {
   display: block;
 }
 
-/* Smooth language transition */
-.main-content * {
-  transition: color 0.2s ease, background-color 0.2s ease;
-}
-
-.lang-switching {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-.lang-switching * {
-  transition: none !important;
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -310,6 +296,10 @@ body {
   align-items: center;
   gap: 16px;
   box-shadow: var(--shadow);
+  gap: 16px;
+  box-shadow: var(--shadow);
+  position: relative;
+  z-index: 2;
   cursor: pointer;
   transition: all 0.3s;
   border: 2px solid transparent;
@@ -557,6 +547,7 @@ body {
   text-align: center;
   font-size: 0.9rem;
   opacity: 0.7;
+  margin-top: 20px;
 }
 
 .card-answer {
@@ -1668,6 +1659,22 @@ body.lang-ja-vi .tip-title-vi {
   display: block;
 }
 body.lang-ja-vi .tip-vi {
+  display: block;
+}
+
+/* Japanese + English */
+body.lang-ja-en .tip-title-en {
+  display: block;
+}
+body.lang-ja-en .tip-en {
+  display: block;
+}
+
+/* Japanese + Chinese */
+body.lang-ja-zh .tip-title-zh {
+  display: block;
+}
+body.lang-ja-zh .tip-zh {
   display: block;
 }
 
